@@ -30,8 +30,8 @@ local entity = Spawner:Create({
 		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
 	},
 	Movement = {
-		Speed = 250,
-		Delay = 14,
+		Speed = 300, -- INCREASED SPEED: Cooper is now much faster (was 100)
+		Delay = 2,
 		Reversed = false
 	},
 	Rebounding = {
@@ -44,7 +44,7 @@ local entity = Spawner:Create({
 	Damage = {
 		Enabled = true,
 		Range = 40,
-		Amount = 1e3689
+		Amount = 125
 	},
 	Crucifixion = {
 		Enabled = true,
@@ -54,8 +54,8 @@ local entity = Spawner:Create({
 	},
 	Death = {
 		Type = "Guiding", -- "Curious"
-		Hints = {"You died to cooper", "Woah calm down dog", "hide", "in a closet"},
-		Cause = "Cooper dog"
+		Hints = {"Death", "Hints", "Go", "Here"},
+		Cause = ""
 	}
 })
 
@@ -179,7 +179,61 @@ end)
 
 entity:SetCallback("OnDamagePlayer", function(newHealth: number)
 	if newHealth <= 0 then
-		print("Entity has killed the player")
+		print("Entity has killed the player - Initiating double jumpscare")
+
+		local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+		
+		-- Setup full-screen UI
+		local jumpGui = Instance.new("ScreenGui")
+		jumpGui.Name = "CooperJumpscare"
+		jumpGui.IgnoreGuiInset = true
+		jumpGui.Parent = playerGui
+
+		local jumpImage = Instance.new("ImageLabel")
+		jumpImage.Size = UDim2.new(1, 0, 1, 0)
+		jumpImage.BackgroundColor3 = Color3.new(0, 0, 0)
+		jumpImage.BackgroundTransparency = 0
+		jumpImage.ScaleType = Enum.ScaleType.Fit
+		jumpImage.Image = "rbxassetid://13793795091" -- Jumpscare UI 1
+		jumpImage.Parent = jumpGui
+
+		-- Camera Shaker setup for jumpscare intensity
+		local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
+		local camera = game.Workspace.CurrentCamera
+		local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+			camera.CFrame = camera.CFrame * shakeCf
+		end)
+		camShake:Start()
+
+		-- Play Jumpscare Sound 1
+		local jumpSound1 = Instance.new("Sound")
+		jumpSound1.SoundId = "rbxassetid://77669369747680" 
+		jumpSound1.Volume = 3
+		jumpSound1.Parent = workspace
+		jumpSound1:Play()
+		camShake:ShakeOnce(20, 50, 0, 2.5) -- Extended shake duration for phase 1
+
+		-- Wait before switching to the second phase (Increased to 2.5 seconds for a longer scare)
+		task.wait(2.5)
+
+		-- Switch to Jumpscare UI 2
+		jumpImage.Image = "rbxassetid://131380212068463"
+		
+		-- Play Jumpscare Sound 2
+		local jumpSound2 = Instance.new("Sound")
+		jumpSound2.SoundId = "rbxassetid://106180173195358"
+		jumpSound2.Volume = 3
+		jumpSound2.Parent = workspace
+		jumpSound2:Play()
+		camShake:ShakeOnce(30, 60, 0, 4) -- Extended shake duration for phase 2
+
+		-- Clean up the jumpscare screen after 4 seconds (Increased for a longer second phase)
+		task.delay(4, function()
+			if jumpGui then jumpGui:Destroy() end
+			if jumpSound1 then jumpSound1:Destroy() end
+			if jumpSound2 then jumpSound2:Destroy() end
+			camShake:Stop()
+		end)
 	else
 		print("Entity has damaged the player")
 	end
