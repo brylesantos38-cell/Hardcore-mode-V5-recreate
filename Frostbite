@@ -68,7 +68,7 @@ function LoadCustomInstance(source, parent)
 end
 
 -- 🔽 Tải Frost entity từ Asset ID
-local s = LoadCustomInstance("12797521669", workspace)
+local s = LoadCustomInstance("97541075583681", workspace)
 if not s then
     warn("Không thể tải Frost entity.")
     return
