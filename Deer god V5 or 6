@@ -1,106 +1,171 @@
-game.ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function()
-if game:GetService("ReplicatedStorage").GameData.Floor.Value == "Hotel" then
-if game.ReplicatedStorage.GameData.LatestRoom.Value == 28 then
+local Speed = 9
+local shuold = true
 
----====== Load spawner ======---
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
-local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Entity%20Spawner/V2/Source.lua"))()
+local player = Players.LocalPlayer
+local Character = player.Character or player.CharacterAdded:Wait()
+local playerGui = player:WaitForChild("PlayerGui")
 
----====== Create entity ======---
+-- Tìm phòng hiện tại an toàn
+local lastroom = ReplicatedStorage:WaitForChild("GameData"):WaitForChild("LatestRoom")
+local notlastest = game.ReplicatedStorage.GameData.LatestRoom
+local currentRoom = Workspace:WaitForChild("CurrentRooms"):FindFirstChild(tostring(notlastest.Value - 3))
+local RoomEntrance = currentRoom and (currentRoom:FindFirstChild("RoomEntrance") or currentRoom:FindFirstChild("RoomStart") or currentRoom.PrimaryPart)
 
-local entity = spawner.Create({
-	Entity = {
-		Name = "Deer god",
-		Asset = "rbxassetid://12805562439",
-		HeightOffset = 0
-	},
-	Lights = {
-		Flicker = {
-			Enabled = true,
-			Duration = 5
-		},
-		Shatter = false,
-		Repair = false
-	},
-	Earthquake = {
-		Enabled = false
-	},
-	CameraShake = {
-		Enabled = false,
-		Range = 100,
-		Values = {1.5, 20, 0.1, 1} -- Magnitude, Roughness, FadeIn, FadeOut
-	},
-	Movement = {
-		Speed = 50,
-		Delay = 5,
-		Reversed = false
-	},
-	Rebounding = {
-		Enabled = false,
-		Type = "Ambush", -- "Blitz"
-		Min = 1,
-		Max = 1,
-		Delay = 0.001
-	},
-	Damage = {
-		Enabled = true,
-		Range = 20,
-		Amount = 0.01
-	},
-	Crucifixion = {
-		Enabled = true,
-		Range = 40,
-		Resist = false,
-		Break = true
-	},
-	Death = {
-		Type = "Guiding", -- "Curious"
-		Hints = {"Death", "Hints", "Go", "Here"},
-		Cause = ""
-	}
-})
-
----====== Debug entity ======---
-
-entity:SetCallback("OnSpawned", function()
-    print("Entity has spawned")
-
-function GitAud(soundgit,filename)
-    SoundName=tostring(SoundName)
-    local url=soundgit
-    local FileName = filename
-    writefile(FileName..".mp3", game:HttpGet(url))
-    return (getcustomasset or getsynasset)(FileName..".mp3")
+-- Hàm tải Âm thanh từ Github
+local function GetGitSound(GithubSnd, SoundName)
+	if not (writefile and isfile and getcustomasset and game.HttpGet) then return nil end
+	if not isfile(SoundName .. ".mp3") then
+		local success, content = pcall(function() return game:HttpGet(GithubSnd) end)
+		if success and content then
+			writefile(SoundName .. ".mp3", content)
+		else
+			return nil
+		end
+	end
+	local sound = Instance.new("Sound")
+	local getasset = getcustomasset or getsynasset
+	if getasset then
+		sound.SoundId = getasset(SoundName .. ".mp3")
+	end
+	return sound
 end
 
-function CustomGitSound(soundlink, vol, filename)
-    local sound = Instance.new("Sound")
-    sound.SoundId = GitAud(soundlink, filename)
-    sound.Parent = workspace
-    sound.Name = "Music"
-    sound.Volume = 2
-   sound:Play()
+-- Phát nhạc nền thực thể
+local Lord = GetGitSound("https://github.com/eoyoustme/Hardcore/blob/main/Your_Consenting_Mind.mp3?raw=true", "Your")
+if Lord then
+	Lord.Parent = Workspace
+	Lord.Volume = 3
+	Lord.PlaybackSpeed = 1
+	Lord:Play()
 end
 
-CustomGitSound("https://github.com/eoyoustme/rebouna/raw/refs/heads/main/HesBehindYouRUN.mp3?raw=true", 1, " Music")
-game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
-game.Workspace.CommonSense:Destroy()
+-- Tải Model mới qua Asset ID
+local success, result = pcall(function()
+	return game:GetObjects("rbxassetid://12262883448")[1]
 end)
 
-entity:SetCallback("OnDamagePlayer", function(newHealth)
-	if newHealth == 0 then
-		print("Entity has killed the player")
-	else
-		print("Entity has damaged the player")
-		game.Players.LocalPlayer.Character.Humanoid:TakeDamage(1000)
-        game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Common Sense"
+local s = success and result or nil
+
+if not s then
+	warn("Không thể tải Model từ Asset ID!")
+	return
+end
+
+s.Parent = Workspace
+local entity = s:FindFirstChildWhichIsA("BasePart") or s.PrimaryPart
+
+if not entity then
+	warn("Không tìm thấy BasePart trong model.")
+	s:Destroy()
+	return
+end
+
+entity.Anchored = true 
+entity.CanCollide = false
+s.PrimaryPart = entity
+
+-- Đặt vị trí xuất hiện
+local hrp = Character:WaitForChild("HumanoidRootPart", 5)
+if RoomEntrance then
+	s:PivotTo(RoomEntrance.CFrame)
+elseif hrp then
+	s:PivotTo(hrp.CFrame * CFrame.new(0, 0, 100))
+end
+
+-- Vòng lặp di chuyển đuổi theo Player
+local connection
+local function followPlayer(dt)
+	local currentHrp = Character:FindFirstChild("HumanoidRootPart")
+	if not currentHrp or not entity then return end
+
+	local currentPos = entity.Position
+	local targetPos = currentHrp.Position
+	local distance = (targetPos - currentPos).Magnitude
+
+	if distance > 0.5 then
+		local direction = (targetPos - currentPos).Unit
+		local newPos = currentPos + (direction * Speed * dt)
+		if (targetPos - newPos).Magnitude > 0.1 then
+			s:PivotTo(CFrame.lookAt(newPos, Vector3.new(targetPos.X, newPos.Y, targetPos.Z)))
+		end
+	end
+end
+
+connection = RunService.RenderStepped:Connect(function(dt)
+	if not entity or not entity.Parent or not s or not s.Parent then
+		if connection then connection:Disconnect() end
+		return
+	end
+	followPlayer(dt)
+end)
+
+local death = true
+local attacking = false
+
+local function PlayJumpscare1()
+	pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/eoyoustme/Impossible/refs/heads/main/Deerforse"))() end)
+end
+
+-- Hàm dọn dẹp bộ nhớ khi ngưng thực thể
+local function cleanup()
+	death = false
+	shuold = false
+	if connection then connection:Disconnect() end
+	if s then s:Destroy() end
+	if Lord then Lord:Destroy() end
+end
+
+-- Vòng lặp tấn công
+task.spawn(function()
+	while death and task.wait(0.1) do
+		if entity and entity.Parent and Character and Character.Parent then
+			local currentHrp = Character:FindFirstChild("HumanoidRootPart")
+			local hum = Character:FindFirstChildOfClass("Humanoid")
+
+			if currentHrp and hum and hum.Health > 0 then
+				local distance = (currentHrp.Position - entity.Position).Magnitude
+
+				-- Kiểm tra khoảng cách va chạm (6 stud)
+				if distance <= 6 then
+					if not Character:GetAttribute("Hiding") then
+						if not attacking then
+							attacking = true
+							hum:TakeDamage(0)
+
+							PlayJumpscare1()
+
+							if hum.Health <= 0 then
+								local stats = ReplicatedStorage:FindFirstChild("GameStats")
+								if stats then
+									local playerStats = stats:FindFirstChild("Player_" .. player.Name)
+									if playerStats and playerStats:FindFirstChild("Total") and playerStats.Total:FindFirstChild("DeathCause") then
+										playerStats.Total.DeathCause.Value = "Deer Lord"
+									end
+								end
+							end
+
+							cleanup()
+							task.wait(2)
+							attacking = false
+							break
+						end
+					end
+				end
+			end
+		end
 	end
 end)
 
----====== Run entity ======---
+local roomCount = Random.new():NextInteger(5, 10)
 
-entity:Run()
+for i = 1, roomCount do
+	lastroom.Changed:Wait()
+end
 
-end
-end
-end)
+cleanup()
