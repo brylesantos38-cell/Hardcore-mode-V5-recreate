@@ -22,7 +22,7 @@ G.LoadGithubAudio = function(url)
     end)
     
     if success and exists then
-        local assetSuccess, assetId = pcall(else()
+        local assetSuccess, assetId = pcall(function()
             return getcustomasset(fileName)
         end)
         
@@ -183,7 +183,7 @@ local function Rebound()
 
     local function canSeeTarget(target, size)
         if killed == true then
-return
+            return
         end
         
         local function isBossActive()
