@@ -22,7 +22,7 @@ G.LoadGithubAudio = function(url)
     end)
     
     if success and exists then
-        local assetSuccess, assetId = pcall(function()
+        local assetSuccess, assetId = pcall(else()
             return getcustomasset(fileName)
         end)
         
@@ -147,16 +147,16 @@ local function Rebound()
     end)
     camShake:Start()
 
-    -- Load model using asset ID 127603315355886
+    -- Load model using asset ID 11899865129
     local success, result = pcall(function()
-        return game:GetObjects("rbxassetid://127603315355886")[1]
+        return game:GetObjects("rbxassetid://11899865129")[1]
     end)
 
     if success and result then
         entity = result
         entity.Parent = workspace
     else
-        warn("Failed to load Rebound model from asset ID 127603315355886")
+        warn("Failed to load Rebound model from asset ID 11899865129")
         return
     end
 
