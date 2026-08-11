@@ -147,16 +147,16 @@ local function Rebound()
     end)
     camShake:Start()
 
-    -- Load model using asset ID 12423364434
+    -- Load model using asset ID 103884487231439
     local success, result = pcall(function()
-        return game:GetObjects("rbxassetid://12423364434")[1]
+        return game:GetObjects("rbxassetid://103884487231439")[1]
     end)
 
     if success and result then
         entity = result
         entity.Parent = workspace
     else
-        warn("Failed to load Rebound model from asset ID 12423364434")
+        warn("Failed to load Rebound model from asset ID 103884487231439")
         return
     end
 
