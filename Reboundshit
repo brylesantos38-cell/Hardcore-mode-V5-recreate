@@ -137,7 +137,7 @@ local function Rebound()
     local plusRoom = latestRoom.Value + 1
     local currentRooms = workspace.CurrentRooms
     local killed = false
-    local speed = 2
+    local speed = 7
     local entity = nil
     local cameraShaker = require(game.ReplicatedStorage.CameraShaker)
     local camera = workspace.CurrentCamera
