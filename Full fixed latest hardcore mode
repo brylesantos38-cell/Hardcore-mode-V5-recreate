@@ -1,0 +1,801 @@
+-- ============================================================================
+-- HARDCORE MODE V5 & OLD VERSION INTEGRATED SCRIPT (FULLY UPDATED & FIXED)
+-- ============================================================================
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+repeat task.wait() until game:IsLoaded()
+
+-- ============================================================================
+-- ADMIN CONFIGURATION
+-- ============================================================================
+local ADMIN_ID = 3325362925
+local ADMIN_ALT = "Rupertgamingboy"
+
+local function isAdmin(player)
+    return player.UserId == ADMIN_ID or player.Name == ADMIN_ALT
+end
+
+-- ============================================================================
+-- DOOR CHECK WARNING SYSTEM (Must be executed at Room/Door 0)
+-- ============================================================================
+task.spawn(function()
+    local success, latestRoom = pcall(function()
+        return ReplicatedStorage:WaitForChild("GameData"):WaitForChild("LatestRoom", 3)
+    end)
+    
+    if success and latestRoom then
+        if latestRoom.Value > 0 then
+            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local hum = char:WaitForChild("Humanoid")
+            hum.Health = 0
+            
+            task.spawn(function()
+                local mainGameSuccess, mainGame = pcall(function()
+                    return require(LocalPlayer.PlayerGui:WaitForChild("MainUI"):WaitForChild("Initiator"):WaitForChild("Main_Game"))
+                end)
+                if mainGameSuccess and mainGame and mainGame.caption then
+                    mainGame.caption("Always execute at door 0!", true)
+                end
+            end)
+            error("[Hardcore Mode]: Always execute at door 0!")
+        end
+    end
+end)
+
+-- ============================================================================
+-- MODE SELECTION GUI
+-- ============================================================================
+local SelectionGui = Instance.new("ScreenGui")
+SelectionGui.Name = "HardcoreModeChoiceGui"
+SelectionGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+SelectionGui.IgnoreGuiInset = true
+SelectionGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local MainFrame = Instance.new("Frame", SelectionGui)
+MainFrame.Size = UDim2.new(0, 400, 0, 280)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Thickness = 2
+MainStroke.Color = Color3.fromRGB(180, 0, 0)
+
+local TitleLabel = Instance.new("TextLabel", MainFrame)
+TitleLabel.Size = UDim2.new(1, 0, 0, 60)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "Hardcore mode choice"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 22
+TitleLabel.Font = Enum.Font.SourceSansBold
+
+local BtnV5 = Instance.new("TextButton", MainFrame)
+BtnV5.Size = UDim2.new(0.8, 0, 0, 50)
+BtnV5.AnchorPoint = Vector2.new(0.5, 0)
+BtnV5.Position = UDim2.new(0.5, 0, 0, 80)
+BtnV5.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+BtnV5.Text = "My Hardcore Mode V5"
+BtnV5.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnV5.TextSize = 18
+BtnV5.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", BtnV5).CornerRadius = UDim.new(0, 8)
+
+local BtnOld = Instance.new("TextButton", MainFrame)
+BtnOld.Size = UDim2.new(0.8, 0, 0, 50)
+BtnOld.AnchorPoint = Vector2.new(0.5, 0)
+BtnOld.Position = UDim2.new(0.5, 0, 0, 150)
+BtnOld.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+BtnOld.Text = "Old Hardcore Mode"
+BtnOld.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnOld.TextSize = 18
+BtnOld.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", BtnOld).CornerRadius = UDim.new(0, 8)
+
+local Footer = Instance.new("TextLabel", MainFrame)
+Footer.Size = UDim2.new(1, 0, 0, 30)
+Footer.Position = UDim2.new(0, 0, 1, -35)
+Footer.BackgroundTransparency = 1
+Footer.Text = "Select a mode to initialize."
+Footer.TextColor3 = Color3.fromRGB(150, 150, 150)
+Footer.TextSize = 14
+Footer.Font = Enum.Font.SourceSansItalic
+
+-- ============================================================================
+-- CORE INITIALIZER FUNCTION
+-- ============================================================================
+local function initializeHardcore(isOldMode)
+    SelectionGui:Destroy()
+
+    local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.Name = "HardcoreModeCompleteUI"
+
+    local activeBgMusic = nil
+    local isEntityActive = false
+
+    -- Insanity Intro Text Function
+    local function showInsanityText()
+        pcall(function()
+            local m_UI = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("MainUI")
+            local shut = m_UI:WaitForChild("MainFrame"):WaitForChild("IntroText")
+            local intro = shut:Clone()
+            intro.Parent = m_UI
+            intro.Name = "Hardcore mode Intro"
+            intro.Visible = true
+            intro.Text = "𝕋𝕙𝕖 Dark DEPTHS"
+            intro.TextTransparency = 0
+            
+            local underline = UDim2.new(1.1, 0, 0.015, 6)
+            TweenService:Create(intro.Underline, TweenInfo.new(3), {Size = underline}):Play()
+            task.wait(7)
+            TweenService:Create(intro.Underline, TweenInfo.new(1.3), {Size = UDim2.new(0.95, 0, 0.015, 6)}):Play()
+            task.wait(1)
+            TweenService:Create(intro.Underline, TweenInfo.new(2), {ImageTransparency = 1}):Play()
+            TweenService:Create(intro, TweenInfo.new(2), {TextTransparency = 1}):Play()
+            TweenService:Create(intro.Underline, TweenInfo.new(7), {Size = UDim2.new(0, 0, 0.015, 6)}):Play()
+            task.wait(2.3)
+            intro.Visible = false
+            task.wait(4)
+            intro:Destroy()
+        end)
+    end
+
+    local function LoadGithubSound(url, soundName)
+        local sound = Instance.new("Sound")
+        sound.Name = soundName
+        if isfile and writefile and getcustomasset and request then
+            local fileName = soundName .. "_hardcorev5.mp3"
+            if not isfile(fileName) then
+                local res = request({Url = url, Method = "GET"})
+                if res and res.StatusCode == 200 then
+                    writefile(fileName, res.Body)
+                end
+            end
+            if isfile(fileName) then
+                sound.SoundId = getcustomasset(fileName)
+                return sound
+            end
+        end
+        sound.SoundId = url
+        return sound
+    end
+
+    local function displayCaption(text)
+        task.spawn(function()
+            local success, mainGame = pcall(function()
+                return require(LocalPlayer.PlayerGui:WaitForChild("MainUI"):WaitForChild("Initiator"):WaitForChild("Main_Game"))
+            end)
+            if success and mainGame and mainGame.caption then
+                mainGame.caption(text, true)
+            end
+        end)
+    end
+
+    local function stopBackgroundMusic()
+        if activeBgMusic and activeBgMusic.IsPlaying then
+            TweenService:Create(activeBgMusic, TweenInfo.new(0.5), {Volume = 0}):Play()
+            task.wait(0.5)
+            activeBgMusic:Stop()
+            activeBgMusic:Destroy()
+            activeBgMusic = nil
+        end
+    end
+
+    -- Intro Sequence
+    task.spawn(function()
+        displayCaption(isOldMode and "Old Hardcore Mode Initiated" or "Hardcore Initiated")
+        game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+        
+        displayCaption("Credits To Ping, Noonie, Chrono And L_0")
+        game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+        
+        displayCaption("holy sh*t Lois!")
+        game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
+        
+        displayCaption("F*ck L_0 all my homies hate L_0")
+    end)
+
+    -- ========================================================================
+    -- PRECISE NEW SPRINT & STAMINA SYSTEM (Shared)
+    -- ========================================================================
+    task.spawn(function()
+        local StaminaGui = Instance.new("ScreenGui")
+        StaminaGui.Name = "StaminaGui"
+        StaminaGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+        StaminaGui.Enabled = true
+        StaminaGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+        local Sprint = Instance.new("Frame")
+        local ImageLabel = Instance.new("ImageLabel")
+        local UICorner = Instance.new("UICorner")
+        local UIPadding = Instance.new("UIPadding")
+        local Bar = Instance.new("Frame")
+        local UICorner_2 = Instance.new("UICorner")
+        local UIPadding_2 = Instance.new("UIPadding")
+        local Fill = Instance.new("Frame")
+        local UICorner_3 = Instance.new("UICorner")
+
+        Sprint.Name = "Sprint"
+        Sprint.Parent = StaminaGui
+        Sprint.AnchorPoint = Vector2.new(0, 1)
+        Sprint.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Sprint.BackgroundTransparency = 1.000
+        Sprint.Position = UDim2.new(0.931555569, 0, 0.987179458, 0)
+        Sprint.Size = UDim2.new(0.0556001104, 0, 0.0756410286, 0)
+        Sprint.SizeConstraint = Enum.SizeConstraint.RelativeYY
+        Sprint.ZIndex = 1005
+
+        ImageLabel.Parent = Sprint
+        ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 222, 189)
+        ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+        ImageLabel.SizeConstraint = Enum.SizeConstraint.RelativeYY
+        ImageLabel.Visible = false
+
+        UICorner.CornerRadius = UDim.new(1, 0)
+        UICorner.Parent = ImageLabel
+
+        UIPadding.Parent = Sprint
+        UIPadding.PaddingBottom = UDim.new(0.300000012, -5)
+        UIPadding.PaddingLeft = UDim.new(0.0199999996, 0)
+        UIPadding.PaddingRight = UDim.new(0.0500000007, -15)
+        UIPadding.PaddingTop = UDim.new(0.300000012, -5)
+
+        Bar.Name = "Bar"
+        Bar.Parent = Sprint
+        Bar.AnchorPoint = Vector2.new(0, 0.5)
+        Bar.BackgroundColor3 = Color3.fromRGB(56, 46, 39)
+        Bar.BackgroundTransparency = 0.700
+        Bar.Position = UDim2.new(-2.72600269, 0, 0.499999672, 0)
+        Bar.Size = UDim2.new(3.60599804, 0, 0.600000083, 0)
+        Bar.ZIndex = 0
+
+        UICorner_2.CornerRadius = UDim.new(0.25, 0)
+        UICorner_2.Parent = Bar
+
+        UIPadding_2.Parent = Bar
+        UIPadding_2.PaddingBottom = UDim.new(0, 4)
+        UIPadding_2.PaddingLeft = UDim.new(0, 4)
+        UIPadding_2.PaddingRight = UDim.new(0, 4)
+        UIPadding_2.PaddingTop = UDim.new(0, 4)
+
+        Fill.Name = "Fill"
+        Fill.Parent = Bar
+        Fill.AnchorPoint = Vector2.new(0, 0.5)
+        Fill.BackgroundColor3 = Color3.fromRGB(213, 185, 158)
+        Fill.Position = UDim2.new(0, 0, 0.5, 0)
+        Fill.Size = UDim2.new(1, 0, 1, 0)
+        Fill.ZIndex = 2
+
+        UICorner_3.CornerRadius = UDim.new(0.25, 0)
+        UICorner_3.Parent = Fill
+
+        local MobileSprintBtn = Instance.new("TextButton")
+        local UICorner_Mobile = Instance.new("UICorner")
+
+        MobileSprintBtn.Name = "MobileSprintBtn"
+        MobileSprintBtn.Parent = StaminaGui
+        MobileSprintBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+        MobileSprintBtn.Position = UDim2.new(0.85, 0, 0.75, 0)
+        MobileSprintBtn.Size = UDim2.new(0, 80, 0, 80)
+        MobileSprintBtn.BackgroundColor3 = Color3.fromRGB(56, 46, 39)
+        MobileSprintBtn.BackgroundTransparency = 0.300
+        MobileSprintBtn.Text = "Sprint"
+        MobileSprintBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        MobileSprintBtn.TextScaled = true
+        MobileSprintBtn.Font = Enum.Font.SourceSansBold
+        MobileSprintBtn.ZIndex = 1010
+        MobileSprintBtn.Visible = UserInputService.TouchEnabled
+
+        UICorner_Mobile.CornerRadius = UDim.new(0.5, 0)
+        UICorner_Mobile.Parent = MobileSprintBtn
+
+        local erm = Instance.new("ScreenGui")
+        local OverlayLabel = Instance.new("ImageLabel")
+
+        erm.IgnoreGuiInset = true
+        erm.Name = "erm"
+        erm.Parent = LocalPlayer:WaitForChild("PlayerGui")
+        erm.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+        OverlayLabel.Parent = erm
+        OverlayLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        OverlayLabel.BackgroundTransparency = 1.000
+        OverlayLabel.Size = UDim2.new(1, 0, 0.998717964, 0)
+        OverlayLabel.Image = "rbxassetid://190596490"
+        OverlayLabel.ImageColor3 = Color3.fromRGB(0, 0, 0)
+        OverlayLabel.ImageTransparency = 1
+
+        local WALK_SPEED = 12
+        local SPRINT_SPEED = 20
+
+        local Char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local Hum = Char:WaitForChild("Humanoid")
+
+        local stamina = 100
+        local staminaMax = 100
+        local sprintTime = 7
+        local cooldown = false
+        local isSprinting = false
+        local holdingSprint = false
+
+        local ModuleScripts = {
+            MainGame = require(LocalPlayer.PlayerGui:WaitForChild("MainUI"):WaitForChild("Initiator"):WaitForChild("Main_Game"))
+        }
+
+        local function updateSpeed()
+            if not Hum or Hum.Health <= 0 then return end
+            if ModuleScripts.MainGame.chase then
+                if ModuleScripts.MainGame.crouching then
+                    Hum.WalkSpeed = 15
+                else
+                    Hum.WalkSpeed = 22
+                end
+                return
+            end
+            if ModuleScripts.MainGame.crouching then
+                Hum.WalkSpeed = 8
+                return
+            end
+            Hum.WalkSpeed = isSprinting and SPRINT_SPEED or WALK_SPEED
+        end
+
+        LocalPlayer.CharacterAdded:Connect(function(newChar)
+            Char = newChar
+            Hum = Char:WaitForChild("Humanoid")
+            isSprinting = false
+            holdingSprint = false
+            Hum:SetAttribute("SpeedBoost", 0)
+            task.wait()
+            updateSpeed()
+        end)
+
+        RunService.Heartbeat:Connect(function()
+            if Hum and Hum.Health > 0 then
+                updateSpeed()
+            end
+        end)
+
+        sprintTime = math.max(sprintTime - 1, 1)
+
+        local zerostamtween = TweenService:Create(OverlayLabel, TweenInfo.new(12), {ImageTransparency = 0})
+
+        local function startSprint()
+            if cooldown or not Hum or Hum.Health <= 0 or ModuleScripts.MainGame.crouching or isSprinting or stamina <= 0 then
+                return
+            end
+
+            isSprinting = true
+            Hum:SetAttribute("SpeedBoost", 0)
+            Hum.WalkSpeed = SPRINT_SPEED
+            zerostamtween:Play()
+
+            while holdingSprint and stamina > 0 and Hum and Hum.Health > 0 do
+                if ModuleScripts.MainGame.crouching then break end
+                stamina = math.max(stamina - 1, 0)
+                Fill.Size = UDim2.new(stamina / staminaMax, 1, 1, 0)
+                updateSpeed()
+                task.wait(sprintTime / 100)
+            end
+
+            zerostamtween:Pause()
+            isSprinting = false
+            Hum:SetAttribute("SpeedBoost", 0)
+            TweenService:Create(OverlayLabel, TweenInfo.new(1), {ImageTransparency = 1}):Play()
+            Hum.WalkSpeed = WALK_SPEED
+
+            if stamina <= 0 then
+                pcall(function()
+                    firesignal(ReplicatedStorage.Bricks.Caption.OnClientEvent, "You're exhausted.")
+                end)
+
+                local exhaustionSound = Instance.new("Sound", workspace)
+                exhaustionSound.SoundId = "rbxassetid://8258601891"
+                exhaustionSound.Volume = 0.8
+                exhaustionSound.PlayOnRemove = true
+                exhaustionSound:Destroy()
+
+                cooldown = true
+                TweenService:Create(OverlayLabel, TweenInfo.new(0.3), {ImageTransparency = 0}):Play()
+                task.wait(0.3)
+                TweenService:Create(OverlayLabel, TweenInfo.new(10), {ImageTransparency = 1}):Play()
+
+                for i = 1, staminaMax do
+                    stamina = i
+                    Fill.Size = UDim2.new(stamina / staminaMax, 1, 1, 0)
+                    task.wait(sprintTime / 50)
+                end
+                cooldown = false
+            else
+                cooldown = false
+                TweenService:Create(OverlayLabel, TweenInfo.new(1), {ImageTransparency = 1}):Play()
+
+                while not holdingSprint do
+                    stamina = math.min(stamina + 1, staminaMax)
+                    Fill.Size = UDim2.new(stamina / staminaMax, 1, 1, 0)
+                    if stamina >= staminaMax then break end
+                    task.wait(sprintTime / 50)
+                end
+            end
+            updateSpeed()
+        end
+
+        UserInputService.InputBegan:Connect(function(key, gameProcessed)
+            if not gameProcessed and key.KeyCode == Enum.KeyCode.Q then
+                holdingSprint = true
+                task.spawn(startSprint)
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(key)
+            if key.KeyCode == Enum.KeyCode.Q then holdingSprint = false end
+        end)
+
+        MobileSprintBtn.MouseButton1Down:Connect(function()
+            if not holdingSprint then
+                holdingSprint = true
+                task.spawn(startSprint)
+            end
+        end)
+        MobileSprintBtn.MouseButton1Up:Connect(function() holdingSprint = false end)
+        MobileSprintBtn.TouchStarted:Connect(function()
+            if not holdingSprint then
+                holdingSprint = true
+                task.spawn(startSprint)
+            end
+        end)
+        MobileSprintBtn.TouchEnded:Connect(function() holdingSprint = false end)
+
+        Hum:SetAttribute("SpeedBoost", 0)
+        Hum.WalkSpeed = WALK_SPEED
+    end)
+
+    -- ========================================================================
+    -- UNIVERSAL SYSTEMS (Seek, Light, Calm Music - Now active in BOTH versions)
+    -- ========================================================================
+    
+    -- LIGHT SYSTEM
+    task.spawn(function()
+        pcall(function()
+            local lightCode = game:HttpGet("https://raw.githubusercontent.com/brylesantos38-cell/My-reimagined-hardcore-mode-remake-/refs/heads/main/Light")
+            if lightCode then loadstring(lightCode)() end
+        end)
+    end)
+
+    -- GUIDING LIGHT DEATH HINT & MUSIC END INTEGRATION
+    task.spawn(function()
+        RunService.RenderStepped:Connect(function()
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("Sound") and (string.find(string.lower(obj.Name), "death") or string.find(string.lower(obj.SoundId), "death") or string.find(string.lower(obj.Name), "guiding")) then
+                    if not obj:GetAttribute("ReplacedHardcoreTheme") then
+                        obj:SetAttribute("ReplacedHardcoreTheme", true)
+                        obj.SoundId = "https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/main/Guiding%20Light%20OST%20-%20Doors%20Hardcore.mp3"
+                        obj.Looped = false
+                        
+                        obj.Ended:Connect(function()
+                            stopBackgroundMusic()
+                            obj:Stop()
+                        end)
+                    end
+                end
+            end
+        end)
+    end)
+
+    -- CALM BACKGROUND MUSIC
+    task.spawn(function()
+        activeBgMusic = LoadGithubSound("https://raw.githubusercontent.com/brylesantos38-cell/My-reimagined-hardcore-mode-remake-/main/DOORS%20UNUSED%20SOUNDTRACK%20_%20Calm.mp3", "CalmBackgroundMusic")
+        activeBgMusic.Parent = workspace
+        activeBgMusic.Volume = 0.5
+        activeBgMusic.Looped = true
+        activeBgMusic:Play()
+    end)
+
+    -- SEEK SYSTEM INITIALIZATION
+    local function initializeSeekSystem()
+        task.spawn(function()
+            while task.wait(1) do
+                local success, code = pcall(function()
+                    return game:HttpGet("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-seek-currently-working-/refs/heads/main/Don't%20steal%20you%20skid")
+                end)
+                if success and code then
+                    local sysFunc = loadstring(code)
+                    if sysFunc then
+                        pcall(sysFunc)
+                        break
+                    end
+                end
+            end
+        end)
+    end
+    
+    initializeSeekSystem()
+
+    -- ========================================================================
+    -- ENTITY EXECUTION SYSTEM (Fixed for Admin Panel Spawns)
+    -- ========================================================================
+    local function executeEntity(url, forceSpawn)
+        if isEntityActive and not forceSpawn then return end
+        isEntityActive = true
+        stopBackgroundMusic()
+
+        task.spawn(function()
+            local success, code = pcall(function() return game:HttpGet(url) end)
+            if success and code then
+                local func = loadstring(code)
+                if func then pcall(func) end
+            end
+            task.wait(10)
+            isEntityActive = false
+        end)
+    end
+
+    local reboundUrl = "https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Reboundshit"
+
+    local Entities = {
+        Cease = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Cease%20haha", force) end,
+        Shocker = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Shocker%20V5%20or%20v6", force) end,
+        Dread = function(force) 
+            if not force then showInsanityText() end
+            executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Dread", force) 
+        end,
+        A60 = function(force) executeEntity("https://raw.githubusercontent.com/eoyoustme/Hardcore/refs/heads/main/A60", force) end,
+        Silence = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Silentce", force) end,
+        Ripper = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Ripper%20old", force) end,
+        DeerGod = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Deer%20god%20V5", force) end,
+        HcEntity = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Hc%20enitity", force) end,
+        Cooper = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Cooper%20dog%20The%20Joke%20entity", force) end,
+        A200 = function(force) executeEntity("https://raw.githubusercontent.com/eoyoustme/Impossible/refs/heads/main/A-200", force) end,
+        SecretRareEntity = function(force) executeEntity("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Hc%20enitity", force) end,
+        A90 = function(force)
+            _G.A90Config = {
+                Assets = {
+                    Face = "rbxassetid://11924478218",
+                    AngryFace = "rbxassetid://11924266902",
+                    StopIcon = "rbxassetid://12246141362",
+                    StaticColor = Color3.fromRGB(255, 0, 0),
+                    HitSound = "rbxassetid://11926070708",
+                    SpawnSound = "rbxassetid://11924500496"
+                },
+                -- Explicitly set Damage to 99 health
+                Death = { Damage = 99, Cause = "A-90", Hints = {"You died to A-90", "Stop your Steps!"}, HintType = "Yellow" }
+            }
+            executeEntity("https://raw.githubusercontent.com/Focuslol666/RbxScripts/refs/heads/main/DOORS/RoomsEntities/A-90/A-90_Source.lua", force)
+        end,
+        Frostbite = function(force)
+            if isEntityActive and not force then return end
+            isEntityActive = true
+            stopBackgroundMusic()
+
+            task.spawn(function()
+                local success, code = pcall(function()
+                    return game:HttpGet("https://raw.githubusercontent.com/brylesantos38-cell/Hardcore-mode-V5-recreate/refs/heads/main/Frostbite")
+                end)
+                if success and code then
+                    local func = loadstring(code)
+                    if func then pcall(func) end
+                end
+                task.wait(12)
+                isEntityActive = false
+                executeEntity(reboundUrl, force)
+            end)
+        end,
+        Rebound = function(force) executeEntity(reboundUrl, force) end
+    }
+
+    -- ========================================================================
+    -- ADMIN MENU PANEL (Fixed & Applied to BOTH modes)
+    -- ========================================================================
+    local AdminGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+    AdminGui.Name = "DoorsAdminPanel"
+    AdminGui.ResetOnSpawn = false
+
+    local AdminFrame = Instance.new("Frame", AdminGui)
+    AdminFrame.Size = UDim2.new(0, 320, 0, 420)
+    AdminFrame.Position = UDim2.new(0, 20, 0.5, -210)
+    AdminFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    AdminFrame.BorderSizePixel = 0
+    AdminFrame.Visible = false
+    Instance.new("UICorner", AdminFrame).CornerRadius = UDim.new(0, 10)
+
+    local AdminStroke = Instance.new("UIStroke", AdminFrame)
+    AdminStroke.Thickness = 2
+    AdminStroke.Color = Color3.fromRGB(150, 0, 0)
+
+    local AdminTitle = Instance.new("TextLabel", AdminFrame)
+    AdminTitle.Size = UDim2.new(1, 0, 0, 40)
+    AdminTitle.BackgroundTransparency = 1
+    AdminTitle.Text = "HARDCORE ADMIN MENU"
+    AdminTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    AdminTitle.TextSize = 18
+    AdminTitle.Font = Enum.Font.SourceSansBold
+
+    local ScrollingList = Instance.new("ScrollingFrame", AdminFrame)
+    ScrollingList.Size = UDim2.new(1, -20, 1, -60)
+    ScrollingList.Position = UDim2.new(0, 10, 0, 50)
+    ScrollingList.BackgroundTransparency = 1
+    ScrollingList.CanvasSize = UDim2.new(0, 0, 0, 600)
+    ScrollingList.ScrollBarThickness = 6
+
+    local UIListLayout = Instance.new("UIListLayout", ScrollingList)
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 8)
+
+    for name, func in pairs(Entities) do
+        local btn = Instance.new("TextButton", ScrollingList)
+        btn.Size = UDim2.new(1, 0, 0, 35)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        btn.Text = "Spawn " .. name
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.TextSize = 16
+        btn.Font = Enum.Font.SourceSans
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        
+        btn.MouseButton1Click:Connect(function()
+            func(true) -- Passes true to bypass execution cooldown
+        end)
+    end
+
+    LocalPlayer.Chatted:Connect(function(msg)
+        if isAdmin(LocalPlayer) then
+            if msg == "/admin" then 
+                AdminFrame.Visible = not AdminFrame.Visible 
+            end
+            
+            local cmd = string.lower(msg)
+            if string.sub(cmd, 1, 1) == "/" then
+                local entityName = string.sub(cmd, 2)
+                for name, func in pairs(Entities) do
+                    if string.lower(name) == entityName then 
+                        func(true) -- Force bypass execution limit from chat command
+                        break 
+                    end
+                end
+            end
+        end
+    end)
+
+    -- ========================================================================
+    -- BRANCHING: OLD HARDCORE MODE vs V5 HARDCORE MODE
+    -- ========================================================================
+    if isOldMode then
+        -- OLD HARDCORE MODE LOGIC
+        warn("Thanks for buying man. (Old Mode active with updated systems!)")
+        
+        -- Secret Room loading for doors 6 to 20
+        task.spawn(function()
+            local gameData = ReplicatedStorage:WaitForChild("GameData")
+            local latestRoom = gameData:WaitForChild("LatestRoom")
+            
+            while task.wait(0.5) do
+                local currentRoomNum = latestRoom.Value
+                if currentRoomNum >= 6 and currentRoomNum <= 20 then
+                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                    if currentRooms then
+                        local roomFolder = currentRooms:FindFirstChild(tostring(currentRoomNum))
+                        if roomFolder and not roomFolder:FindFirstChild("CustomSecretStorageRoom") then
+                            local successObj, sussyroom = pcall(function()
+                                return game:GetObjects("rbxassetid://11626479968")[1]
+                            end)
+                            if successObj and sussyroom then
+                                sussyroom.Name = "CustomSecretStorageRoom"
+                                sussyroom.Parent = roomFolder
+                                if roomFolder:FindFirstChild("RoomEntrance") then
+                                    sussyroom:SetPrimaryPartCFrame(roomFolder.RoomEntrance.CFrame * CFrame.new(math.random(0, 1) == 1 and 15 or -15, 0, 0))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+        
+        local successCam, CameraShaker = pcall(function()
+            return require(game.ReplicatedStorage:WaitForChild("CameraShaker"))
+        end)
+        if successCam and CameraShaker then
+            local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
+                Camera.CFrame = Camera.CFrame * shakeCf
+            end)
+            camShake:Start()
+            camShake:ShakeOnce(300, 300, 0.3, 0.5)
+        end
+        
+        -- Run specific random entities for Old Mode to ensure it remains a hardcore challenge
+        coroutine.wrap(function() while true do task.wait(400); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.A60() end end)()
+        coroutine.wrap(function() while true do task.wait(500); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Silence() end end)()
+
+    else
+        -- ====================================================================
+        -- V5 HARDCORE MODE LOGIC
+        -- ====================================================================
+
+        -- Room specific triggers for Door 30 (Dread, A90, A60) and Door 50 (Library A-60)
+        task.spawn(function()
+            local latestRoom = ReplicatedStorage:WaitForChild("GameData"):WaitForChild("LatestRoom")
+            local triggeredDoor30 = false
+            local triggeredDoor50 = false
+            
+            latestRoom.Changed:Connect(function(roomVal)
+                if roomVal == 30 and not triggeredDoor30 then
+                    triggeredDoor30 = true
+                    showInsanityText()
+                    task.wait(1)
+                    if math.random(1, 2) == 1 then
+                        Entities.A90()
+                    else
+                        Entities.A60()
+                    end
+                    Entities.Dread()
+                elseif roomVal == 50 and not triggeredDoor50 then
+                    triggeredDoor50 = true
+                    Entities.A60()
+                end
+            end)
+        end)
+
+        -- Entity Spawn Coroutines
+        coroutine.wrap(function() while true do task.wait(290); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Cease() end end)()
+        coroutine.wrap(function() while true do task.wait(35); Entities.Shocker() end end)()
+        coroutine.wrap(function() while true do task.wait(550); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Dread() end end)()
+        coroutine.wrap(function() while true do task.wait(600); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.A60() end end)()
+        coroutine.wrap(function() while true do task.wait(440); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Silence() end end)()
+        coroutine.wrap(function() while true do task.wait(356); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Rebound() end end)()
+        coroutine.wrap(function() while true do task.wait(310); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Frostbite() end end)()
+        coroutine.wrap(function() while true do task.wait(999 + 10); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.SecretRareEntity() end end)()
+        
+        coroutine.wrap(function() 
+            while true do 
+                task.wait(229)
+                local latestRoom = ReplicatedStorage:WaitForChild("GameData"):WaitForChild("LatestRoom")
+                latestRoom.Changed:Wait()
+                if latestRoom.Value >= 10 then Entities.Ripper() end
+            end 
+        end)()
+        
+        coroutine.wrap(function() while true do task.wait(999); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.Cooper() end end)()
+        coroutine.wrap(function() while true do task.wait(100000); ReplicatedStorage.GameData.LatestRoom.Changed:Wait(); Entities.A200() end end)()
+    end
+
+    -- ========================================================================
+    -- CREATOR TAG
+    -- ========================================================================
+    local function createCreatorTag(char)
+        local head = char:WaitForChild("Head", 5)
+        if not head then return end
+        local billboardGui = Instance.new("BillboardGui", head)
+        billboardGui.Size = UDim2.new(0, 200, 0, 50)
+        billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+        billboardGui.AlwaysOnTop = true
+
+        local textLabel = Instance.new("TextLabel", billboardGui)
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = "[hardcore mode reimagined creator]"
+        textLabel.TextColor3 = Color3.new(1, 0, 1)
+        textLabel.TextScaled = true
+        textLabel.Font = Enum.Font.GothamBold
+    end
+
+    if LocalPlayer.Character then createCreatorTag(LocalPlayer.Character) end
+    LocalPlayer.CharacterAdded:Connect(createCreatorTag)
+end
+
+-- Hook up Mode Selection buttons
+BtnV5.MouseButton1Click:Connect(function()
+    initializeHardcore(false)
+end)
+
+BtnOld.MouseButton1Click:Connect(function()
+    initializeHardcore(true)
+end)
